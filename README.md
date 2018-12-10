@@ -11,7 +11,8 @@ Note - Requires a background image 'background.png'.
 
 # Dependancies
 
-python-pygame, python-tz
+* python-pygame
+* python-tz
 
 # To Do
 
