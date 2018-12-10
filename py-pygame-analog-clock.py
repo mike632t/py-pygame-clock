@@ -1,6 +1,6 @@
 #!/usr/bin/python -s
 #
-# py-pygame-analog-clock.py
+# py-pygame-moon-clock.py
 #
 # This  program  is free software: you can redistribute it and/or  modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -27,13 +27,12 @@
 #                     background needs to be redrawn - MEJT
 #  5 Feb 18         - Any wallpaper image is automatically tiled to fill the
 #                     clock face - MEJT
+# 26 Aug 18         - Added  an optional element to show if it is daytime or
+#                     night time - MEJT
 #
-# To Do:            - Sort out issue with transparancy
-#                   - Resize background images
-#                   - Implement an hand object...
+# To Do:            - Implement an hand object...
 #
 # Dependancies:     - python-pygame, python-tz
-# 
 #
 # https://www.codeday.top/2017/02/23/18371.html
 # https://stackoverflow.com/questions/166506 - Get IP address
@@ -110,6 +109,53 @@ class clock(object):
     
     _buffer = pygame.Surface.copy(self.bitmap)
     
+    if self.radius < SMALL or self.highlight is None:
+      # Draw the day/night wheel 
+      _length = int(self.radius * .9 - 2 * self.font_height + .5) * 2
+      _image = pygame.Surface((_length, _length), pygame.SRCALPHA) # Create a drawing surface for the wheel
+      channels = []
+      for channel in range(3):
+        _source, _dest = pygame.Color('midnightblue')[channel], pygame.Color('skyblue')[channel]
+        channels.append(numpy.tile(numpy.linspace(_source, _dest, _length), [_length, 1],),)
+      _gradient = numpy.dstack(channels)
+      pygame.surfarray.blit_array(_image, pygame.surfarray.map_array(_image, _gradient),)
+      
+      _mask = pygame.Surface((_length, _length), pygame.SRCALPHA)
+      pygame.draw.circle(_mask, (pygame.Color('white')), (_length  // 2, _length // 2) , _length //2)  
+      _image.blit(_mask, (0, 0), None, pygame.BLEND_RGBA_MULT)
+      
+      _width = _length // 5
+      _moon = pygame.Surface((_width, _width), pygame.SRCALPHA)
+      _moon.fill((179, 179, 179)) # Fill shape with foreground colour
+      _mask = pygame.Surface((_width, _width), pygame.SRCALPHA) # Create a mask
+      pygame.draw.circle(_mask, (pygame.Color('white')), (_width // 2, _width // 2) , _width // 2)
+      pygame.draw.circle(_mask, (0, 0, 0, 0),            (_width // 2 - _width // 4, _width // 2 + _width // 5), int( _width / 2.25)) # Mask off some of the moon to make a cresent shape
+      _moon.blit(_mask, (0, 0), None, pygame.BLEND_RGBA_MULT)
+      #_moon = pygame.transform.rotate(_moon, -30)  
+      _image.blit(_moon, ((_length - _moon.get_width()) // 2, (_width - _moon.get_height()) // 2 + _length // 32))
+        
+      _width = _length // 5
+      #_sun = pygame.Surface((_width, _width), pygame.SRCALPHA)
+      #_sun.fill((250, 214, 75)) # Fill shape with foreground colour
+      #_mask = pygame.Surface((_width, _width), pygame.SRCALPHA) # Create a mask
+      #pygame.draw.circle(_mask, (pygame.Color('white')), (_width // 2, _width // 2) , _width // 2)
+      #_sun.blit(_mask, (0, 0), None, pygame.BLEND_RGBA_MULT)
+      #_image.blit(_sun, ((_length - _sun.get_width()) // 2, (_length - _sun.get_height()) - _length // 32))
+      pygame.draw.circle(_image, (250, 214, 75), ((_length - _width) // 2, (_length - _width // 2 - _length // 16)) , _width // 2)
+        
+      pygame.draw.circle(_image, (0, 0, 0, 0), (_length // 2, _length // 2 ), (_length) // 2 - _width - _length // 16) # Make the middle of the wheel transparent.
+        
+      _image = pygame.transform.rotate(_image, abs(((12 - _hours + float(_minutes) / 60) * 15)%360))
+      
+      pygame.draw.polygon(_image, (0, 0, 0, 0), ((0, 0), 
+                                              (0, _image.get_height() // 2 + _length // 8), 
+                                              (_image.get_width() // 2 , _image.get_height() // 2), 
+                                              (_image.get_width(), _image.get_height() // 2 + _length // 8), 
+                                              (_image.get_width(), 0))) # Mask out hidden part of the dial.
+      
+      _buffer.blit(_image, ((_buffer.get_width() - _image.get_width() + .5) // 2, (_buffer.get_height() - _image.get_height() + .5) // 2))
+      del _image
+
     # Draw the hour hand
     _angle = abs(((_hours + float(_minutes) / 60) * 30)%360)
     _length = self.radius * .9 - 2 * self.font_height
