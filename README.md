@@ -7,7 +7,7 @@ screen using the 7 inch Raspberry Pi screen.
 
 Can be started as a daemon when Pi boots.
 
-~ Note - Requires a background image 'background.png'.
+Note - Requires a background image 'background.png'.
 
 # Dependancies
 
