@@ -50,7 +50,6 @@
 # https://stackoverflow.com/questions/166506 - Get IP address
 
 
-   
 class Clock(object):
   
   def __init__(self, _colour, _radius, _width = 0, _timezone = 'GMT', _title = None, _wallpaper = None):
@@ -164,7 +163,7 @@ if __name__ == '__main__':
 
   WIDTH, HEIGHT = (800 , 480) # Size of window/display
 
-  WALLPAPER = 'leaves.png' # Background wallpaper, clock will use background colour if bitmap does not exist
+  WALLPAPER = 'wallpaper.png' # Background wallpaper, clock will use background colour if bitmap does not exist
   IMAGE = 'background.png' # Background image for main clock face, clock will use selected clock face colour if bitmap does not exist
   BACKGROUND = 'black' # Background colour
   TEXT = 'white' # Text colour (used for IP address)
@@ -176,6 +175,7 @@ if __name__ == '__main__':
   FPS = 60
   import pygame
   import signal, socket
+  
       
   def _tile(_bitmap,_wallpaper):
     for x_offset in range(0,_bitmap.get_width(),_wallpaper.get_width()):
@@ -289,7 +289,5 @@ if __name__ == '__main__':
     pygame.display.flip()
     pygame.time.Clock().tick(FPS)
 
-  del _clock
-   
   pygame.quit()
   exit(0)
