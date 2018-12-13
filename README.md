@@ -3,13 +3,11 @@
 Written in Python using Pygame. 
 
 Displays an analogue clock, can be run in a window or on the console in full
-screen using the 7 inch Raspberry Pi screen.  
+screen using the 7 inch Raspberry Pi screen and can started as a daemon when
+the Pi boots.
 
-Can be started as a daemon when Pi boots.
 
-Note - Requires a background image 'background.png'.
-
-# Dependancies
+# Dependencies
 
 * python-pygame
 * python-tz
