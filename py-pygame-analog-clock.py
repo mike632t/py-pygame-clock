@@ -46,6 +46,7 @@
 #                     updated if any of the properties are changed - MEJT
 #
 # To Do:            - Update the bitmap automatically when properties change
+#                   - Update properties using set and get?
 #                   - Implement an hand object...
 #                   
 # Dependencies:     - python-pygame, python-tz
@@ -70,7 +71,8 @@ class Clock(object):
     self.timezone = _timezone
     self.title = _title
     self.size = self.width, self.height = (self.radius * 2, self.radius * 2)
-    self.bitmap = pygame.Surface(self.size)
+    self._bitmap = pygame.Surface(self.size)
+    self._wallpaper = _wallpaper
     self.update() # Update bitmap
   
   def update(self):
@@ -82,19 +84,19 @@ class Clock(object):
     image = font.render(' ', True, self.foreground)
     self.font_height = image.get_height()
     self.size = self.width, self.height
-    self.bitmap = pygame.Surface(self.size, pygame.SRCALPHA)
+    self._bitmap = pygame.Surface(self.size, pygame.SRCALPHA)
     
     try: # Fill in the background - try loading an image and fill it with a colour if it fails to load
-      _picture = pygame.image.load(_wallpaper).convert_alpha()
-      _tile(self.bitmap, _picture)
+      _picture = pygame.image.load(self._wallpaper).convert_alpha()
+      _tile(self._bitmap, _picture)
     except Exception as _error:
-      pygame.draw.circle(self.bitmap, self.colour, (self.radius, self.radius) , self.radius - self.border)
+      pygame.draw.circle(self._bitmap, self.colour, (self.radius, self.radius) , self.radius - self.border)
     
     # Draw the dial
     _buffer = pygame.Surface(self.size, pygame.SRCALPHA)
     pygame.draw.circle(_buffer, self.foreground, (self.radius, self.radius) , self.radius)
     pygame.draw.circle(_buffer, (0, 0, 0, 0), (self.radius, self.radius) , self.radius - self.border)
-    self.bitmap.blit(_buffer, (0, 0))
+    self._bitmap.blit(_buffer, (0, 0))
     del _buffer
     
     # Draw the numbers on the dial
@@ -104,16 +106,16 @@ class Clock(object):
         _angle = math.radians(n * (360 / 12) - 90)
         x = math.cos(_angle) * (self.radius - self.font_height) - self.font_height // 2 # Calculate the where to put the number allowing for it's size
         y = math.sin(_angle) * (self.radius - self.font_height) - self.font_height // 2
-        self.bitmap.blit(image, (self.radius + int(x), self.radius + int(y))) # Draw the number on the bitmap
+        self._bitmap.blit(image, (self.radius + int(x), self.radius + int(y))) # Draw the number on the bitmap
   
       if self.title is not None:    
         _image = font.render(str(self.title + ' '), True, self.foreground)
-        self.bitmap.blit(_image, (self.radius - _image.get_width() // 2, self.radius * .75 - _image.get_height() // 2)) # Draw the title
+        self._bitmap.blit(_image, (self.radius - _image.get_width() // 2, self.radius * .75 - _image.get_height() // 2)) # Draw the title
     
     # Create a mask
     _mask = pygame.Surface(self.size, pygame.SRCALPHA)
     pygame.draw.circle(_mask, (pygame.Color('white')), (self.radius, self.radius) , self.radius)
-    self.bitmap.blit(_mask, (0, 0), None, pygame.BLEND_RGBA_MULT)
+    self._bitmap.blit(_mask, (0, 0), None, pygame.BLEND_RGBA_MULT)
     
   def draw(self, _surface, _position):
     
@@ -130,7 +132,7 @@ class Clock(object):
     _minutes = _now.minute
     _seconds = _now.second
     
-    _buffer = pygame.Surface.copy(self.bitmap)
+    _buffer = pygame.Surface.copy(self._bitmap)
     
     # Draw the hour hand
     _angle = abs(((_hours + float(_minutes) / 60) * 30)%360)
@@ -173,11 +175,9 @@ if __name__ == '__main__':
 
   WIDTH, HEIGHT = (800 , 480) # Size of window/display
   WALLPAPER = 'wallpaper.png' # Background wallpaper, clock will use background colour if bitmap does not exist
-  IMAGE = 'background.png' # Background image for main clock face, clock will use selected clock face colour if bitmap does not exist
   BACKGROUND = 'black' # Background colour
   TEXT = 'white' # Text colour (used for IP address)
   LARGE_FACE = 'dark grey' # Colour of the large clock face
-  LARGE_FACE = 'goldenrod' # Colour of the large clock face
   SMALL_FACE = 'dim grey' # Colour of the small clock faces
   FPS = 60
 
@@ -192,7 +192,7 @@ if __name__ == '__main__':
   
   def _colour(_object):
     if _object is None or _object == '':
-      return (0, 0, 0, 0)
+      return (0, 0, 0, 0).png
     else:
       try:
         return pygame.Color(_object)
@@ -273,35 +273,27 @@ if __name__ == '__main__':
   _New_York = Clock(_colour(SMALL_FACE), 64, 2, 'America/New_York', 'New York')
   _New_York.highlight = None
   
-  _London = Clock(_colour(LARGE_FACE), 160, 6, 'Europe/London', '', '')
+  _London = Clock(_colour(LARGE_FACE), 160, 6, 'Europe/London', '')
   _London.text = _colour(TEXT)
-  _London.update()
+  _London.update() # Update clock to apply changes to properties
 
-  _delta = 1
   while _scan():
+
     screen.blit(_background, (0, 0)) # Redrawing the background every time the display is updated fixes the transparency issue 
-  
-    _New_York.draw(screen, (100, 72)) # Redraw each clock
 
-    if datetime.now().second % 2 == 0: # Flash one ofthe clock faces - just because I can!
-      _Paris.colour = _colour('dark red') 
-    else:
-      _Paris.colour = _colour(SMALL_FACE)
-    _Paris.update()
     
-    _Paris.draw(screen, (250, 72))
-
-    _Perth.draw(screen, (400, 72))
-
-    _Hong_Kong.draw(screen, (550, 72))
-
-    _Auckland.draw(screen, (700, 72))
-
-    if not(120 <= _London.radius <= 160): # Resize clock face 
-      _delta *= -1
-    _London.radius -= _delta
+    if (datetime.now().second % 2 == 0 and 
+        0 <= datetime.now().hour <= 4): # Flash the clock faces - to remind me to go to bed!
+      _London.colour = _colour('dark red') 
+    else:
+      _London.colour = _colour(LARGE_FACE)
     _London.update()
 
+    _New_York.draw(screen, (100, 72)) # Redraw each clock
+    _Paris.draw(screen, (250, 72))
+    _Perth.draw(screen, (400, 72))
+    _Hong_Kong.draw(screen, (550, 72))
+    _Auckland.draw(screen, (700, 72))
     _London.draw(screen, (400, 312))
 
     pygame.display.flip()
