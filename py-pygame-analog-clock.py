@@ -172,11 +172,12 @@ class Clock(object):
 if __name__ == '__main__':
 
   WIDTH, HEIGHT = (800 , 480) # Size of window/display
-  WALLPAPER = 'wallpaper.pngs' # Background wallpaper, clock will use background colour if bitmap does not exist
-  IMAGE = 'background.pngs' # Background image for main clock face, clock will use selected clock face colour if bitmap does not exist
+  WALLPAPER = 'wallpaper.png' # Background wallpaper, clock will use background colour if bitmap does not exist
+  IMAGE = 'background.png' # Background image for main clock face, clock will use selected clock face colour if bitmap does not exist
   BACKGROUND = 'black' # Background colour
   TEXT = 'white' # Text colour (used for IP address)
   LARGE_FACE = 'dark grey' # Colour of the large clock face
+  LARGE_FACE = 'goldenrod' # Colour of the large clock face
   SMALL_FACE = 'dim grey' # Colour of the small clock faces
   FPS = 60
 
@@ -287,6 +288,7 @@ if __name__ == '__main__':
     else:
       _Paris.colour = _colour(SMALL_FACE)
     _Paris.update()
+    
     _Paris.draw(screen, (250, 72))
 
     _Perth.draw(screen, (400, 72))
@@ -295,12 +297,11 @@ if __name__ == '__main__':
 
     _Auckland.draw(screen, (700, 72))
 
-    if not(120 <= _London.radius <= 160):
+    if not(120 <= _London.radius <= 160): # Resize clock face 
       _delta *= -1
-      
     _London.radius -= _delta
-
     _London.update()
+
     _London.draw(screen, (400, 312))
 
     pygame.display.flip()
