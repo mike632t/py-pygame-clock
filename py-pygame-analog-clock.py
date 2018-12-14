@@ -41,9 +41,13 @@
 #                   - Added  a new text property to allow the colour of  the
 #                     digits  to be defined separately from the minute  hand
 #                     if desired - MEJT
+# 14 Dec 18         - Moved the code to draw the clock face bitmap from init
+#                     to  a  seperate method, allowing the clock face to  be
+#                     updated when any of the properties are changed - MEJT
 #
-# To Do:            - Implement an hand object...
-#
+# To Do:            - Update the bitmap automatically when properties change
+#                   - Implement an hand object...
+#                   
 # Dependencies:     - python-pygame, python-tz
 #
 # https://www.codeday.top/2017/02/23/18371.html
@@ -52,11 +56,9 @@
 
 class Clock(object):
   
-  def __init__(self, _colour, _radius, _width = 0, _timezone = 'GMT', _title = None, _wallpaper = None):
+  def __init__(self, _colour, _radius, _border = 0, _timezone = 'GMT', _title = None, _wallpaper = None):
   
     import pygame
-    import numpy
-    import math
     
     self.background = pygame.Color('grey') # Hour hand
     self.foreground = pygame.Color('light grey') # Minute hand
@@ -64,13 +66,18 @@ class Clock(object):
     self.text = self.foreground
     self.colour = _colour
     self.radius = _radius
-    self.width = _width
+    self.border = _border
     self.timezone = _timezone
     self.title = _title
     self.size = self.width, self.height = (self.radius * 2, self.radius * 2)
     self.bitmap = pygame.Surface(self.size)
-    
-    font=pygame.font.Font(None,_radius //4) # Derive the font height from the radius
+    self.update() # Update bitmap
+  
+  def update(self):
+
+    import math
+
+    font=pygame.font.Font(None,self.radius //4) # Derive the font height from the radius
     image = font.render(' ', True, self.foreground)
     self.font_height = image.get_height()
     self.size = self.width, self.height
@@ -80,39 +87,41 @@ class Clock(object):
       _picture = pygame.image.load(_wallpaper).convert_alpha()
       _tile(self.bitmap, _picture)
     except Exception as _error:
-      pygame.draw.circle(self.bitmap, self.colour, (self.radius, self.radius) , self.radius - _width)
+      pygame.draw.circle(self.bitmap, self.colour, (self.radius, self.radius) , self.radius - self.border)
     
     # Draw the dial
     _buffer = pygame.Surface(self.size, pygame.SRCALPHA)
     pygame.draw.circle(_buffer, self.foreground, (self.radius, self.radius) , self.radius)
-    pygame.draw.circle(_buffer, (0, 0, 0, 0), (self.radius, self.radius) , self.radius - _width)
+    pygame.draw.circle(_buffer, (0, 0, 0, 0), (self.radius, self.radius) , self.radius - self.border)
     self.bitmap.blit(_buffer, (0, 0))
     del _buffer
     
     # Draw the numbers on the dial
-    if _radius >= 40: # Don't draw numbers if the radius is less than 40 pixels - there isn't enough space
-      for n in range(1,13):
+    if self.radius >= 40: # Don't draw numbers if the radius is less than 40 pixels - there isn't enough space
+      for n in range(1, 13):
         image = font.render(str(n), True, self.text)
         _angle = math.radians(n * (360 / 12) - 90)
         x = math.cos(_angle) * (self.radius - self.font_height) - self.font_height // 2 # Calculate the where to put the number allowing for it's size
         y = math.sin(_angle) * (self.radius - self.font_height) - self.font_height // 2
-        self.bitmap.blit(image, (self.radius + int(x), _radius + int(y))) # Draw the number on the bitmap
+        self.bitmap.blit(image, (self.radius + int(x), self.radius + int(y))) # Draw the number on the bitmap
   
       if self.title is not None:    
-        _image = font.render(str(_title + ' '), True, self.foreground)
-        self.bitmap.blit(_image, (self.radius - _image.get_width() // 2, _radius * .75 - _image.get_height() // 2)) # Draw the title
+        _image = font.render(str(self.title + ' '), True, self.foreground)
+        self.bitmap.blit(_image, (self.radius - _image.get_width() // 2, self.radius * .75 - _image.get_height() // 2)) # Draw the title
     
     # Create a mask
     _mask = pygame.Surface(self.size, pygame.SRCALPHA)
     pygame.draw.circle(_mask, (pygame.Color('white')), (self.radius, self.radius) , self.radius)
     self.bitmap.blit(_mask, (0, 0), None, pygame.BLEND_RGBA_MULT)
     
-    
   def draw(self, _surface, _position):
-
+    
     import pygame
     from datetime import datetime
     from pytz import timezone
+    
+    # Updating the bitmap every time the hands are redrawn is optional but means that the display is updated if the the properties of the clock are changed
+    # self.update()
     
     # Get the time of day (GMT)
     _now = timezone(self.timezone).normalize(datetime.now(timezone('UTC')))
@@ -162,27 +171,23 @@ class Clock(object):
 if __name__ == '__main__':
 
   WIDTH, HEIGHT = (800 , 480) # Size of window/display
-
-  WALLPAPER = 'wallpaper.png' # Background wallpaper, clock will use background colour if bitmap does not exist
-  IMAGE = 'background.png' # Background image for main clock face, clock will use selected clock face colour if bitmap does not exist
+  WALLPAPER = 'wallpaper.pngs' # Background wallpaper, clock will use background colour if bitmap does not exist
+  IMAGE = 'background.pngs' # Background image for main clock face, clock will use selected clock face colour if bitmap does not exist
   BACKGROUND = 'black' # Background colour
   TEXT = 'white' # Text colour (used for IP address)
-
-  LARGE_FACE = 'dark grey' # Colour of the large clock face (it will be transparent if no colour specified)
-  LARGE_FACE = '' # Colour of the large clock face (it will be transparent if no colour specified)
-  SMALL_FACE = 'dim grey' # Colour of the small clock faces (it will be transparent if no colour specified)
-
+  LARGE_FACE = 'dark grey' # Colour of the large clock face
+  SMALL_FACE = 'dim grey' # Colour of the small clock faces
   FPS = 60
+
+  from datetime import datetime
   import pygame
   import signal, socket
-  
       
   def _tile(_bitmap,_wallpaper):
     for x_offset in range(0,_bitmap.get_width(),_wallpaper.get_width()):
       for y_offset in range(0,_bitmap.get_height(),_wallpaper.get_height()):
         _bitmap.blit(_wallpaper,(x_offset,y_offset)) 
-    
-
+  
   def _colour(_object):
     if _object is None or _object == '':
       return (0, 0, 0, 0)
@@ -191,8 +196,7 @@ if __name__ == '__main__':
         return pygame.Color(_object)
       except ValueError as _error:
         pass
-         
-    
+  
   def _scan():
     event = pygame.event.poll()
     if event.type == pygame.QUIT:
@@ -202,25 +206,29 @@ if __name__ == '__main__':
       if event.key == pygame.K_ESCAPE or event.key == pygame.K_SPACE:
         return False
     return True
-   
-   
+  
   def _abort(signal, frame):
     pygame.quit()
     exit(0) 
-   
-   
+  
   def _handler(signum, frame):
     pass
-    
-   
+
   _size = WIDTH, HEIGHT
 
   signal.signal(signal.SIGHUP, _handler)
   signal.signal(signal.SIGINT, _abort) # Set up interrupt event handlers.
   signal.signal(signal.SIGTERM, _abort)
 
+  try: # Attemot to get the IP address
+    connection = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    connection.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    connection.connect(('<broadcast>', 0))
+    address = connection.getsockname()[0]
+  except IOError:
+    address = ''
 
-  try:
+  try: # Initialize pygame (catching and ignoring any execptions)
     pygame.init()
   except AttributeError:
     pass
@@ -230,37 +238,25 @@ if __name__ == '__main__':
   pygame.display.set_caption("Clock")
   screen = pygame.display.set_mode((_size))
   screen.fill(_colour('black'))
-
-  try:
-    connection = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    connection.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    connection.connect(('<broadcast>', 0))
-    address = connection.getsockname()[0]
-  except IOError:
-    address = ''
-
-
   icon = pygame.Surface((128, 138)) # Create a drawing surface for the icon
   icon.fill(_colour('black'))
   icon.set_colorkey(_colour('black'))
   _clock = Clock(_colour('dim grey'), 64, 1)
   _clock.draw(icon, (64, 64))
   pygame.display.set_icon(icon) # Set it as the windows icon!
-
   font=pygame.font.Font(None, 16) # Derive the font height from the radius
-  text = font.render(address, True, _colour(TEXT))
-
+  _address = font.render(address, True, _colour(TEXT))
   _background = pygame.Surface((_size)) # Create a drawing surface for the background
 
-  try: # Fill in the wallpaper - try loading an image and fill the background with colour if it fails to load
+  try: # Fill set background wallpaper - or use the background with colour
     _wallpaper = pygame.image.load(WALLPAPER)
     _tile(_background, _wallpaper)
   except Exception as _error:
     _background.fill(_colour(BACKGROUND))
 
-  _background.blit(text, (2, screen.get_height() - text.get_height()))
+  _background.blit(_address, (2, screen.get_height() - _address.get_height())) # Display the IP address 
 
-  _Auckland = Clock(_colour(SMALL_FACE), 64, 2, 'Pacific/Auckland', 'Auckland')
+  _Auckland = Clock(_colour(SMALL_FACE), 64, 2, 'Pacific/Auckland', 'Auckland') 
   _Auckland.highlight = None
 
   _Hong_Kong = Clock(_colour(SMALL_FACE), 64, 2, 'Asia/Hong_Kong', 'Hong Kong')
@@ -274,13 +270,14 @@ if __name__ == '__main__':
 
   _New_York = Clock(_colour(SMALL_FACE), 64, 2, 'America/New_York', 'New York')
   _New_York.highlight = None
-
+  
   _London = Clock(_colour(LARGE_FACE), 160, 6, 'Europe/London', '', '')
   _London.text = _colour(TEXT)
+  _London.update()
 
   while _scan():
     screen.blit(_background, (0, 0)) # Redrawing the background every time the display is updated fixes the transparency issue 
-    _New_York.draw(screen, (100, 72))
+    _New_York.draw(screen, (100, 72)) # Redraw each closk
     _Paris.draw(screen, (250, 72))
     _Perth.draw(screen, (400, 72))
     _Hong_Kong.draw(screen, (550, 72))
