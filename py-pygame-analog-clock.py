@@ -77,6 +77,7 @@ class Clock(object):
 
     import math
 
+    self.size = self.width, self.height = (self.radius * 2, self.radius * 2)
     font=pygame.font.Font(None,self.radius //4) # Derive the font height from the radius
     image = font.render(' ', True, self.foreground)
     self.font_height = image.get_height()
@@ -256,33 +257,52 @@ if __name__ == '__main__':
 
   _background.blit(_address, (2, screen.get_height() - _address.get_height())) # Display the IP address 
 
-  _Auckland = Clock(_colour(SMALL_FACE), 64, 2, 'Pacific/Auckland', 'Auckland') 
-  _Auckland.highlight = None
+  #_Auckland = Clock(_colour(SMALL_FACE), 64, 2, 'Pacific/Auckland', 'Auckland') 
+  #_Auckland.highlight = None
 
-  _Hong_Kong = Clock(_colour(SMALL_FACE), 64, 2, 'Asia/Hong_Kong', 'Hong Kong')
-  _Hong_Kong.highlight = None
+  #_Hong_Kong = Clock(_colour(SMALL_FACE), 64, 2, 'Asia/Hong_Kong', 'Hong Kong')
+  #_Hong_Kong.highlight = None
 
-  _Perth = Clock(_colour(SMALL_FACE), 64, 2, 'Australia/Perth', 'Perth', '')
-  _Perth.highlight = None
+  #_Perth = Clock(_colour(SMALL_FACE), 64, 2, 'Australia/Perth', 'Perth', '')
+  #_Perth.highlight = None
 
-  _Paris = Clock(_colour(SMALL_FACE), 64, 2, 'Europe/Paris', 'Paris')
-  _Paris.highlight = None
+  #_Paris = Clock(_colour(SMALL_FACE), 64, 2, 'Europe/Paris', 'Paris')
+  #_Paris.highlight = None
 
-  _New_York = Clock(_colour(SMALL_FACE), 64, 2, 'America/New_York', 'New York')
-  _New_York.highlight = None
+  #_New_York = Clock(_colour(SMALL_FACE), 64, 2, 'America/New_York', 'New York')
+  #_New_York.highlight = None
   
   _London = Clock(_colour(LARGE_FACE), 160, 6, 'Europe/London', '', '')
   _London.text = _colour(TEXT)
   _London.update()
 
+  _delta = 1
   while _scan():
     screen.blit(_background, (0, 0)) # Redrawing the background every time the display is updated fixes the transparency issue 
-    _New_York.draw(screen, (100, 72)) # Redraw each closk
-    _Paris.draw(screen, (250, 72))
-    _Perth.draw(screen, (400, 72))
-    _Hong_Kong.draw(screen, (550, 72))
-    _Auckland.draw(screen, (700, 72))
-    _London.draw(screen, (400, 312 ))
+  
+    #_New_York.draw(screen, (100, 72)) # Redraw each clock
+
+    #if datetime.now().second % 2 == 0: # Flash one ofthe clock faces - just because I can!
+      #_Paris.colour = _colour('dark red') 
+    #else:
+      #_Paris.colour = _colour(SMALL_FACE)
+    #_Paris.update()
+    #_Paris.draw(screen, (250, 72))
+
+    #_Perth.draw(screen, (400, 72))
+
+    #_Hong_Kong.draw(screen, (550, 72))
+
+    #_Auckland.draw(screen, (700, 72))
+
+    if not(120 <= _London.radius <= 160):
+      _delta *= -1
+      
+    _London.radius -= _delta
+
+    _London.update()
+    _London.draw(screen, (400, 312))
+
     pygame.display.flip()
     pygame.time.Clock().tick(FPS)
 
