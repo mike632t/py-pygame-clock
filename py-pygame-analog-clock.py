@@ -43,7 +43,7 @@
 #                     if desired - MEJT
 # 14 Dec 18         - Moved the code to draw the clock face bitmap from init
 #                     to  a  seperate method, allowing the clock face to  be
-#                     updated when any of the properties are changed - MEJT
+#                     updated if any of the properties are changed - MEJT
 #
 # To Do:            - Update the bitmap automatically when properties change
 #                   - Implement an hand object...
