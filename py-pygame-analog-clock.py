@@ -281,20 +281,19 @@ if __name__ == '__main__':
 
     screen.blit(_background, (0, 0)) # Redrawing the background every time the display is updated fixes the transparency issue 
 
-    
-    if (datetime.now().second % 2 == 0 and 
-        0 <= datetime.now().hour <= 4): # Flash the clock faces - to remind me to go to bed!
-      _London.colour = _colour('dark red') 
-    else:
-      _London.colour = _colour(LARGE_FACE)
-    _London.update()
-
     _New_York.draw(screen, (100, 72)) # Redraw each clock
     _Paris.draw(screen, (250, 72))
     _Perth.draw(screen, (400, 72))
     _Hong_Kong.draw(screen, (550, 72))
     _Auckland.draw(screen, (700, 72))
     _London.draw(screen, (400, 312))
+
+    if (datetime.now().second % 2 == 0 and 
+        0 <= datetime.now().hour <= 4): # Flash the clock faces - to remind me to go to bed!
+      _London.colour = _colour('dark red') 
+    else:
+      _London.colour = _colour(LARGE_FACE)
+    _London.update()
 
     pygame.display.flip()
     pygame.time.Clock().tick(FPS)
